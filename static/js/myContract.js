@@ -1,6 +1,6 @@
-secret="";
+secret = "";
 myUrl = "http://localhost:8544";
-myContractAddress = "0xb644af72ffa2ca96cf9044c3fe381ddb1ff69f64";
+myContractAddress = "0xa1020504cad972c0a9e83546e69cc349efd2b97e";
 abi = [
 	{
 		"constant": false,
@@ -23,7 +23,11 @@ abi = [
 				"type": "address"
 			},
 			{
-				"name": "mentoringSubject",
+				"name": "_fee",
+				"type": "uint256"
+			},
+			{
+				"name": "_mentoringSubject",
 				"type": "string"
 			}
 		],
@@ -37,6 +41,32 @@ abi = [
 		"constant": false,
 		"inputs": [],
 		"name": "requestInitToken",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_id",
+				"type": "uint256"
+			},
+			{
+				"name": "_date",
+				"type": "string"
+			},
+			{
+				"name": "_place",
+				"type": "string"
+			},
+			{
+				"name": "_content",
+				"type": "string"
+			}
+		],
+		"name": "saveMentoring",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -108,6 +138,18 @@ abi = [
 		"anonymous": false,
 		"inputs": [
 			{
+				"indexed": false,
+				"name": "_address",
+				"type": "address"
+			}
+		],
+		"name": "SaveMentoring",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
 				"indexed": true,
 				"name": "_from",
 				"type": "address"
@@ -120,6 +162,39 @@ abi = [
 		],
 		"name": "OwnershipTransferred",
 		"type": "event"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "countOfMents",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "deposits",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
 		"constant": true,
@@ -178,6 +253,10 @@ abi = [
 		],
 		"name": "getMent",
 		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			},
 			{
 				"name": "",
 				"type": "uint256"
@@ -284,6 +363,139 @@ abi = [
 		"constant": true,
 		"inputs": [
 			{
+				"name": "_id",
+				"type": "uint256"
+			}
+		],
+		"name": "isValidMentoring",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "menteeAddress",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "mentorAddress",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "mentoringContent",
+		"outputs": [
+			{
+				"name": "",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "mentoringDate",
+		"outputs": [
+			{
+				"name": "",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "mentoringPlace",
+		"outputs": [
+			{
+				"name": "",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "mentoringSubject",
+		"outputs": [
+			{
+				"name": "",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
 				"name": "",
 				"type": "uint256"
 			}
@@ -291,36 +503,12 @@ abi = [
 		"name": "ments",
 		"outputs": [
 			{
-				"name": "id",
+				"name": "fee",
 				"type": "uint256"
 			},
 			{
 				"name": "timestamp",
 				"type": "uint256"
-			},
-			{
-				"name": "mentoringDate",
-				"type": "string"
-			},
-			{
-				"name": "mentoringPlace",
-				"type": "string"
-			},
-			{
-				"name": "mentoringSubject",
-				"type": "string"
-			},
-			{
-				"name": "mentoringContent",
-				"type": "string"
-			},
-			{
-				"name": "mentorAddress",
-				"type": "address"
-			},
-			{
-				"name": "menteeAddress",
-				"type": "address"
 			},
 			{
 				"name": "isValid",
