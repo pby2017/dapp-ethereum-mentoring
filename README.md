@@ -20,7 +20,7 @@
 
 ## 테스트 (방법)
 
-[참고영상](https://youtu.be/YbMikJvbBJU)
+[참고영상](https://youtu.be/KDWl5c38GjU)
 
 1. Geth (dev mode & rpcport except 8545) 실행
 ```
