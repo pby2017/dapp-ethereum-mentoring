@@ -63,92 +63,112 @@
             while (table.hasChildNodes()) {
                 table.removeChild(table.firstChild);
             }
-            insertForTable(table, ['번호', '활동 일자', '멘토링 주제', '신청자', '상태', 'Deposit', '등록 일자']);
+            insertForTable(table, ['번호', '활동 일자', '멘토링 주제', '신청자', '상태', '비용', '등록 일자']);
 
             var countOfMents = Number(mentContract.getCountOfMents());
 
-            for (var i = 1; i < countOfMents; i++) {
+            // id, deposit, timestamp, date, place, subject, content, mentor, mentee, valid
+            for (var i = 1; i <= countOfMents; i++) {
                 var mentTuple = mentContract.getMent(i);
                 var toString = mentTuple.toString();
                 var ment = toString.split(',');
                 var mentId = Number(ment[0]);
-                var mentTimestamp = Number(ment[1]);
-                var mentoringDate = ment[2];
-                var mentoringPlace = ment[3];
-                var mentoringSubject = ment[4];
-                var mentoringContent = ment[5];
-                var mentorAddress = ment[6];
-                var menteeAddress = ment[7];
+                var mentroingFee = ment[1];
+                var mentTimestamp = Number(ment[2]);
+                mentTimestamp = mentTimestamp * 1000;
+                var mentoringDate = ment[3];
+                var mentoringPlace = ment[4];
+                var mentoringSubject = ment[5];
+                var mentoringContent = ment[6];
+                var mentorAddress = ment[7];
+                var menteeAddress = ment[8];
                 var userName = mentContract.getUserName(menteeAddress);
-                var mentIsValid = ment[8];
+                var mentIsValid = ment[9];
                 var state = '';
-                if (mentIsValid == true) {
+                if (mentIsValid == 'true') {
                     state = '진행중';
                 } else {
                     state = '완료';
                 }
 
                 insertForTable(table, [mentId, mentoringDate, mentoringSubject, userName,
-                    state, 0, makeFormattedDate(mentTimestamp)]);
+                    state, mentroingFee, makeFormattedDate(mentTimestamp)]);
             }
         }
         function makeFormattedDate(timestamp) {
             var mentDate = new Date(timestamp);
             return mentDate.getFullYear() + '-' +
                 (mentDate.getMonth() + 1) + '-' +
-                mentDate.getDay();
+                mentDate.getDate();
         }
-        // function showAtndList() {
-        //     initAtnd();
-        //     var list = getAccountsList();
-
-        //     var table = document.getElementById('mentTable');
-        //     while (table.hasChildNodes()) {
-        //         table.removeChild(table.firstChild);
-        //     }
-        //     insertForTable(table, ['번호', '식별자', '출석', '지각', '결석', 'ATND']);
-
-        //     var atndValid = mentContract.isAtndValid();
-
-        //     var length = Number(list.length);
-        //     console.log('등록된 인원수 : ' + length);
-
-        //     // round all account and show table each member
-        //     for (var i = 1; i < list.length; i++) {
-        //         var atnd = mentContract.getAtnds(list[i]);
-
-        //         var toString = atnd.toString();
-        //         var strArray = toString.split(',');
-
-        //         var kindOfAttend = strArray[0];
-        //         var balance = strArray[1];
-
-        //         var attendCheckBoxHtml = '';
-        //         var lateCheckBoxHtml = '';
-        //         var absentCheckBoxHtml = '';
-
-        //         if (atndValid == true) {
-        //             attendCheckBoxHtml = '<input type="radio" name="' + list[i] + '" >'
-        //             lateCheckBoxHtml = '<input type="radio" name="' + list[i] + '" >'
-        //             absentCheckBoxHtml = '<input type="radio" name="' + list[i] + '" >'
-        //             if (kindOfAttend == 2) {
-        //                 attendCheckBoxHtml = '<input type="radio" name="' + list[i] + '" checked>'
-        //             } else if (kindOfAttend == 1) {
-        //                 lateCheckBoxHtml = '<input type="radio" name="' + list[i] + '" checked>'
-        //             } else if (kindOfAttend == 0) {
-        //                 absentCheckBoxHtml = '<input type="radio" name="' + list[i] + '" checked>'
-        //             }
-        //         }
-
-        //         insertForTable(table, [i, list[i], attendCheckBoxHtml, lateCheckBoxHtml, absentCheckBoxHtml, balance]);
-        //     }
-        // }
         function insertForTable(table, arr) {
             var arrLength = arr.length;
             var row = table.insertRow();
+            if (arr[0] >= 1) {
+                row.setAttribute("onclick", "showMentDetail(" + arr[0] + ")");
+            }
             for (var i = 0; i < arrLength; i++) {
                 row.insertCell(i).innerHTML = arr[i];
             }
+        }
+        function showMentDetail(id) {
+            // id, deposit, timestamp, date, place, subject, content, mentor, mentee, valid
+            var mentTuple = mentContract.getMent(id);
+            var toString = mentTuple.toString();
+            var ment = toString.split(',');
+            // get detailTable
+            var table = document.getElementById('mentDetailTable');
+            // id
+            var mentoringIdElement = table.rows[1].cells[1].childNodes[1];
+            mentoringIdElement.value = id;
+            // fee
+            var mentoringFeeElement = table.rows[1].cells[3].childNodes[1];
+            mentoringFeeElement.disabled = true
+            mentoringFeeElement.value = ment[1];
+            // date
+            var mentoringDateElement = table.rows[1].cells[5].childNodes[1];
+            if (ment[9] == 'true') { mentoringDateElement.disabled = false; }
+            mentoringDateElement.value = ment[3];
+            // place
+            var mentoringPlaceElement = table.rows[1].cells[7].childNodes[1];
+            if (ment[9] == 'true') { mentoringPlaceElement.disabled = false }
+            mentoringPlaceElement.value = ment[4]
+            // mentor
+            var selectMentorAccountsElement = table.rows[2].cells[1].childNodes[1];
+            while (selectMentorAccountsElement.hasChildNodes()) {
+                selectMentorAccountsElement.removeChild(selectMentorAccountsElement.firstChild);
+            }
+            var mentorAddress = ment[7];
+            makeSelectOption(selectMentorAccountsElement, mentorAddress);
+            // mentee
+            var selectMenteeAccountsElement = table.rows[3].cells[1].childNodes[1];
+            while (selectMenteeAccountsElement.hasChildNodes()) {
+                selectMenteeAccountsElement.removeChild(selectMenteeAccountsElement.firstChild);
+            }
+            var menteeAddress = ment[8];
+            makeSelectOption(selectMenteeAccountsElement, menteeAddress);
+            // subject
+            var mentoringSubjectElement = table.rows[4].cells[1].childNodes[1];
+            if (ment[9] == 'false') { mentoringSubjectElement.disabled = true; }
+            mentoringSubjectElement.value = ment[5];
+            // content
+            var mentoringContentElement = table.rows[5].cells[1].childNodes[1];
+            if (ment[9] == 'true') {
+                mentoringContentElement.disabled = false;
+            } else {
+                mentoringContentElement.disabled = true;
+            }
+            mentoringContentElement.value = ment[6];
+        }
+        function makeSelectOption(element, address) {
+            var userName = mentContract.getUserName(address);
+            var opt = document.createElement('option');
+            opt.value = address;
+            var weiBalance = web3.eth.getBalance(address);
+            var ethBalance = Math.round(web3.fromWei(weiBalance, web3.ETH));
+            var tokenBalance = mentContract.getBalance(address);
+            opt.innerHTML = address + ' (' + userName + ' / ' + tokenBalance + ' ment / ' + ethBalance + ' eth)';
+            element.appendChild(opt);
         }
         function watchFilter(filterOption, successMsg, failMsg, address, passphrase) {
             var filter = web3.eth.filter('latest');
@@ -206,25 +226,23 @@
                 }
             });
         }
-        // function watchSetKindOfAttend(address, successMsg, failMsg) {
-        //     var setKindOfAttendEvent = mentContract.SetKindOfAttend({ from: address, gas: WATCH_GAS_LIMIT });
-        //     console.log('setKindOfAttendEvent define - , setKindOfAttendEvent');
-        //     setKindOfAttendEvent.watch(function (error, result) {
-        //         setKindOfAttendEvent.stopWatching();
-        //         console.log('setKindOfAttendEvent stopWatching()');
-        //         if (!error) {
-        //             alert(successMsg);
-        //             console.log(successMsg);
-        //             console.log(result);
-        //             initAtnd();
-        //             makeAccountsSelect();
-        //             showAtndList();
-        //         } else {
-        //             alert(failMsg);
-        //             console.log(error);
-        //         }
-        //     });
-        // }
+        function watchSaveMentoring(address, successMsg, failMsg) {
+            var saveMentoringEvent = mentContract.SaveMentoring({ from: address, gas: WATCH_GAS_LIMIT });
+            console.log('saveMentoringEvent define - , saveMentoringEvent');
+            saveMentoringEvent.watch(function (error, result) {
+                saveMentoringEvent.stopWatching();
+                console.log('saveMentoringEvent stopWatching()');
+                if (!error) {
+                    console.log(successMsg);
+                    console.log(result);
+                    alert(successMsg);
+                    location.reload();
+                } else {
+                    alert(failMsg);
+                    console.log(error);
+                }
+            });
+        }
         function watchEndedAtnd(address, successMsg, failMsg) {
             var endAtndEvent = mentContract.EndedAtnd({ from: address, gas: WATCH_GAS_LIMIT });
             console.log('endAtndEvent define - ', endAtndEvent);
@@ -329,132 +347,93 @@
                 return true;
             }
         }
-        function registerMentoring(address, passphrase, mentoringSubject) {
+        function registerMentoring() {
+            // get detailTable
+            var table = document.getElementById('mentDetailTable');
+            // fee
+            var mentoringFeeElement = table.rows[1].cells[3].childNodes[1];
+            var mentoringFee = mentoringFeeElement.value;
+            // mentor
+            var selectMentorAccountsElement = table.rows[2].cells[1].childNodes[1];
+            var mentorAddress = selectMentorAccountsElement.value;
+            // mentee
+            var selectMenteeAccountsElement = table.rows[3].cells[1].childNodes[1];
+            var menteeAddress = selectMenteeAccountsElement.value;
+            // subject
+            var mentoringSubjectElement = table.rows[4].cells[1].childNodes[1];
+            var mentoringSubject = mentoringSubjectElement.value;
 
-            var myAddress = '';
-            var myPassphrase = '';
-            var mySubject = '';
-            if (typeof address == 'undefined'
-                && typeof passphrase == 'undefined'
-                && typeof mentoringSubject == 'undefined') {
-
-                var mentorAddressElement = document.getElementById('selectMentorAccounts');
-                var mentorAddress = mentorAddressElement.value;
-                var menteeAddressElement = document.getElementById('selectMenteeAccounts');
-                var menteeAddress = menteeAddressElement.value;
-                var mentoringSubjectElement = document.getElementById('mentoringSubject');
-                var mentoringSubject = mentoringSubjectElement.value;
-
-                myAddress = menteeAddress;
-                myPassphrase = prompt("비밀번호를 입력해주세요.");
-                if (myPassphrase == null) {
-                    return false;
-                }
-                mySubject = mentoringSubject;
-            } else {
-                myAddress = address;
-                myPassphrase = passphrase;
-                mySubject = mentoringSubject;
-            }
-
-            try {
-                web3.personal.unlockAccount(myAddress, myPassphrase);
-            } catch (error) {
-                alert('올바른 비밀번호를 입력해주세요.');
-                return;
-            }
-
-            watchRegisterMentoring(myAddress, '멘토링 등록 성공!', '멘토링 등록 실패!');
-            mentContract.registerMentoring(
-                mentorAddress, menteeAddress, mentoringSubject,
-                { from: menteeAddress, gas: ADD_MENT_GAS_LIMIT });
-        }
-        function saveMentoring(address, passphrase) {
-            var myAddress = '';
-            var myPassphrase = '';
-            if (typeof address == 'undefined' && typeof passphrase == 'undefined') {
-                myAddress = web3.eth.coinbase;
-                myPassphrase = prompt("비밀번호를 입력해주세요.");
-                if (myPassphrase == null) {
-                    return false;
-                }
-            } else {
-                myAddress = address;
-                myPassphrase = passphrase;
-            }
-
-            try {
-                web3.personal.unlockAccount(myAddress, myPassphrase);
-            } catch (error) {
-                alert('올바른 비밀번호를 입력해주세요.');
-                return;
-            }
-        }
-        // function saveAtnd(address, passphrase) {
-        //     var myAddress = '';
-        //     var myPassphrase = '';
-        //     if (typeof address == 'undefined' && typeof passphrase == 'undefined') {
-        //         myAddress = web3.eth.coinbase;
-        //         myPassphrase = prompt("비밀번호를 입력해주세요.");
-        //         if (myPassphrase == null) {
-        //             return false;
-        //         }
-        //     } else {
-        //         myAddress = address;
-        //         myPassphrase = passphrase;
-        //     }
-
-        //     try {
-        //         web3.personal.unlockAccount(myAddress, myPassphrase);
-        //     } catch (error) {
-        //         alert('올바른 비밀번호를 입력해주세요.');
-        //         return;
-        //     }
-
-        //     initAtnd();
-
-        //     if (!mentContract.isAtndValid({ from: web3.eth.coinbase })) {
-        //         alert('유효하지 않은 출결 관리입니다.');
-        //         return;
-        //     }
-
-        //     watchSetKindOfAttend(myAddress, '출결 관리 저장 성공!', '출결 관리 저장 실패!');
-
-        //     var a = document.getElementById('mentTable');
-        //     var rowCount = a.rows.length;
-        //     for (var i = 1; i < rowCount; i++) {
-        //         var atndId = Number(a.rows[i].cells[0].innerHTML);
-        //         var atndAddress = a.rows[i].cells[1].innerHTML;
-        //         var attendChecked = a.rows[i].cells[2].childNodes[0].checked;
-        //         var lateChecked = a.rows[i].cells[3].childNodes[0].checked;
-        //         var absentChecked = a.rows[i].cells[4].childNodes[0].checked;
-        //         var balance = Number(a.rows[i].cells[5].innerHTML);
-
-        //         if (attendChecked) {
-        //             mentContract.setKindOfAttend(ATTEND_CHECKED, atndAddress, { from: web3.eth.coinbase, gas: ADD_MENT_GAS_LIMIT });
-        //         } else if (lateChecked) {
-        //             mentContract.setKindOfAttend(LATE_CHECKED, atndAddress, { from: web3.eth.coinbase, gas: ADD_MENT_GAS_LIMIT });
-        //         } else {
-        //             mentContract.setKindOfAttend(ABSENT_CHECKED, atndAddress, { from: web3.eth.coinbase, gas: ADD_MENT_GAS_LIMIT });
-        //         }
-        //     }
-
-        //     return true;
-        // }
-        function endAtnd() {
-            var myAddress = web3.eth.coinbase;
             var myPassphrase = prompt("비밀번호를 입력해주세요.");
             if (myPassphrase == null) {
+                return false;
+            }
+
+            try {
+                web3.personal.unlockAccount(menteeAddress, myPassphrase);
+            } catch (error) {
+                alert('올바른 비밀번호를 입력해주세요.');
                 return;
             }
 
-            saveAtnd(myAddress, myPassphrase);
+            if (!checkEnoughBalance(menteeAddress, mentoringFee)) {
+                alert('토큰량이 부족합니다.');
+                return;
+            }
 
-            watchEndedAtnd(myAddress, '출결 관리 종료 성공!', '출결 관리 종료 실패!');
+            watchRegisterMentoring(menteeAddress, '멘토링 등록 성공!', '멘토링 등록 실패!');
+            mentContract.registerMentoring(
+                mentorAddress, menteeAddress, mentoringFee, mentoringSubject,
+                { from: menteeAddress, gas: ADD_MENT_GAS_LIMIT });
+        }
+        function saveMentoring() {
+            // get detailTable
+            var table = document.getElementById('mentDetailTable');
+            // id
+            var mentoringIdElement = table.rows[1].cells[1].childNodes[1];
+            var mentoringId = mentoringIdElement.value;
+            // fee
+            var mentoringFeeElement = table.rows[1].cells[3].childNodes[1];
+            var mentoringFee = mentoringFeeElement.value;
+            // date
+            var mentoringDateElement = table.rows[1].cells[5].childNodes[1];
+            var mentoringDate = mentoringDateElement.value;
+            // place
+            var mentoringPlaceElement = table.rows[1].cells[7].childNodes[1];
+            var mentoringPlace = mentoringPlaceElement.value;
+            // mentor
+            var selectMentorAccountsElement = table.rows[2].cells[1].childNodes[1];
+            var mentorAddress = selectMentorAccountsElement.value;
+            // mentee
+            var selectMenteeAccountsElement = table.rows[3].cells[1].childNodes[1];
+            var menteeAddress = selectMenteeAccountsElement.value;
+            // subject
+            var mentoringSubjectElement = table.rows[4].cells[1].childNodes[1];
+            var mentoringSubject = mentoringSubjectElement.value;
+            // content
+            var mentoringContentElement = table.rows[5].cells[1].childNodes[1];
+            var mentoringContent = mentoringContentElement.value;
 
-            var list = getAccountsList();
+            if (!mentContract.isValidMentoring(mentoringId, { from: web3.eth.coinbase })) {
+                alert("미등록 또는 마감된 멘토링입니다.");
+                return;
+            }
 
-            mentContract.endAtnd(list.slice(1, list.length), { from: myAddress, gas: ADD_MENT_GAS_LIMIT });
+            var myPassphrase = prompt("비밀번호를 입력해주세요.");
+            if (myPassphrase == null) {
+                return false;
+            }
+
+            try {
+                web3.personal.unlockAccount(menteeAddress, myPassphrase);
+            } catch (error) {
+                alert('올바른 비밀번호를 입력해주세요.');
+                return;
+            }
+
+            watchSaveMentoring(menteeAddress, '멘토링 일지 저장 성공!', '멘토링 일지 저장 실패!');
+            mentContract.saveMentoring(
+                mentoringId, mentoringDate, mentoringPlace, mentoringContent,
+                { from: menteeAddress, gas: ADD_MENT_GAS_LIMIT });
         }
     </script>
 </head>
@@ -492,27 +471,39 @@
             <div style="width: 100%; margin: auto;">
                 <h1>멘토링 일지 작성</h1>
                 <div>
-                    <table class="table" style="border: none;">
+                    <table id="mentDetailTable" class="table" style="border: none;">
                         <tbody>
                             <tr>
-                                <td class="text-right" colspan="4">
+                                <td class="text-right" colspan="8">
                                     <button class="btn btn-primary" onClick="registerMentoring()">멘토링 등록</button>
                                     <button class="btn btn-primary" onClick="saveMentoring()">멘토링 저장</button>
                                 </td>
                             </tr>
                             <tr>
                                 <th style="text-align: center; vertical-align: middle;">
+                                    <label for="mentoringId">번호</label>
+                                </th>
+                                <td style="width: 10%;">
+                                    <input class="form-control" type="text" id="mentoringId" disabled="disabled">
+                                </td>
+                                <th style="text-align: center; vertical-align: middle;">
+                                    <label for="mentoringFee">비용</label>
+                                </th>
+                                <td style="width: 10%;">
+                                    <input class="form-control" type="text" id="mentoringFee" placeholder="1">
+                                </td>
+                                <th style="text-align: center; vertical-align: middle;">
                                     <label for="mentoringDate">활동 일자</label>
                                 </th>
                                 <td>
-                                    <input class="form-control" type="text" style="width: 100%;" id="mentoringDate"
-                                        placeholder="2019-04-13" disabled="disabled">
+                                    <input class="form-control" type="text" id="mentoringDate" placeholder="2019-04-13"
+                                        disabled="disabled">
                                 </td>
                                 <th style="text-align: center; vertical-align: middle;">
                                     <label for="mentoringPlace">멘토링 장소</label>
                                 </th>
                                 <td>
-                                    <input class="form-control" type="text" style="width: 100%;" id="mentoringPlace"
+                                    <input class="form-control" type="text" id="mentoringPlace"
                                         placeholder="서울/서초역/인근식당" disabled="disabled">
                                 </td>
                             </tr>
@@ -520,7 +511,7 @@
                                 <th style="text-align: center; vertical-align: middle;">
                                     <label for="selectMentorAccounts">멘토</label>
                                 </th>
-                                <td colspan="3" id="td_mentor">
+                                <td colspan="7" id="td_mentor">
                                     <select class="accounts" name="creator" id="selectMentorAccounts"></select>
                                 </td>
                             </tr>
@@ -528,7 +519,7 @@
                                 <th style="text-align: center; vertical-align: middle;">
                                     <label for="selectMenteeAccounts">멘티</label>
                                 </th>
-                                <td colspan="3" id="td_mentee">
+                                <td colspan="7" id="td_mentee">
                                     <select class="accounts" name="creator" id="selectMenteeAccounts"></select>
                                 </td>
                             </tr>
@@ -536,8 +527,8 @@
                                 <th style="text-align: center; vertical-align: middle;">
                                     <label for="mentoringSubject">멘토링 주제</label>
                                 </th>
-                                <td colspan="3">
-                                    <input class="form-control" type="text" style="width: 100%;" id="mentoringSubject"
+                                <td colspan="7">
+                                    <input class="form-control" type="text" id="mentoringSubject"
                                         placeholder="AES128 학습">
                                 </td>
                             </tr>
@@ -545,8 +536,8 @@
                                 <th style="text-align: center; vertical-align: middle;">
                                     <label for="mentoringContent">멘토링 내용</label>
                                 </th>
-                                <td colspan="3">
-                                    <textarea class="form-control" id="mentoringContent" rows="10" style="width: 100%;"
+                                <td colspan="7">
+                                    <textarea class="form-control" id="mentoringContent" rows="10"
                                         placeholder="멘토링 내용 작성" disabled="disabled"></textarea>
                                 </td>
                             </tr>
@@ -556,8 +547,11 @@
             </div>
             <div style="width: 100%; margin: auto;">
                 <h1>멘토링 관리</h1>
+                <div class="text-right">
+                    <button class="btn btn-primary" onClick="javascript:location.reload()">새 멘토링 등록</button>
+                </div>
                 <div>
-                    <table style="width: 100%; text-align: center;" id="mentTable">
+                    <table class="table table-hover" style="width: 100%; text-align: center;" id="mentTable">
                     </table>
                 </div>
             </div>
@@ -574,16 +568,13 @@
         <h4>&lt;계정관리 - 신규 계정 토큰 요청&gt;</h4>
         1. 우측 상단의 '계정 관리' 버튼을 누릅니다.<br>
         2. '신규 계정 토큰 요청' 버튼을 누릅니다.
-        <h4>&lt;출결 저장하기&gt;</h4>
-        1. '출석', '지각', '결석' 버튼에 대해 알맞게 선택합니다.<br>
-        2. '출결 저장' 버튼을 누릅니다.
-        <h4>&lt;출결 종료하기&gt;</h4>
-        1. '출결 종료' 버튼을 누릅니다.<br>
-        ※ 처음에 토큰을 deposit 하게 됩니다. 이후 출결 상태에 따라 돌려받을 수 있습니다.<br>
-        ※ '출석'자는 deposit 토큰 전체를 돌려받습니다.<br>
-        ※ '지각'자는 deposit 토큰 절반을 돌려받습니다.<br>
-        ※ '결석'자는 deposit 토큰을 돌려받지 못합니다.<br>
-        ※ '출석'자는 남은 deposit 토큰을 '출석'자들에게 나눠집니다.
+        <h4>&lt;멘토링 등록하기&gt;</h4>
+        1. '첫 화면의 멘토링 일지 작성 영역' 또는 '멘토링 관리' 영역에서 '새 멘토링 등록' 버튼을 누릅니다.<br>
+        2. '멘토링 일지 작성' 영역에서 '비용', '멘토', '멘티', '멘토링 주제' 를 입력하고 우측 상단의 '멘토링 등록' 버튼을 누릅니다.
+        <h4>&lt;멘토링 저장하기&gt;</h4>
+        1. '멘토링 관리' 영역에서 멘토링 항목을 누릅니다.<br>
+        2. '멘토링 일지 작성' 영역에서 '활동 일자', '멘토링 장소', '멘토링 내용' 을 입력하고 우측 상단의 '멘토링 저장' 버튼을 누릅니다.
+        ※ '멘토링 저장' 을 실행하면 멘티의 토큰이 멘토에게 송금됩니다.
         <br>
         <br>
         <br>
