@@ -237,115 +237,69 @@ contract MentSupplyToken is ERC20Interface, Owned {
 contract MentContract is Owned{
     using SafeMath for uint;
 
+    uint public INIT_TOKEN_VALUE = 100;
+
     // 멘토링 struct
     struct MentStruct{
-        uint id;
+        uint fee;
         uint timestamp;
-        string mentoringDate;
-        string mentoringPlace;
-        string mentoringSubject;
-        string mentoringContent;
-        address mentorAddress;
-        address menteeAddress;
         bool isValid;
     }
 
     MentSupplyToken tokenContract = new MentSupplyToken();
 
-    // 멘토링들
-    MentStruct[] public ments;
-
-    // address와 name 매핑
+    // mentoring (fee, timestamp, isValid) 관리
+    mapping(uint=>MentStruct) public ments;
+    // 유저 네임 관리
     mapping(address=>string) public usersName;
-    
-    // 토큰 지급 받았는지 여부, deposit 1회 했는지 여부, 개인 deposit 저장, 출결 상태 저장
+    // 초기 토큰 지급 여부 관리
     mapping(address=>bool) public receivedInitToken;
-    // mapping(address=>bool) public hasDeposited;
-    // mapping(address=>uint) public eachDeposits;
-    // mapping(address=>uint8) public kindOfAttend;
-
-    // 초기 토큰 지급량
-    uint public INIT_TOKEN_VALUE = 100;
-
-    // 전체 deposit 량 저장, 출결 시스템이 유효한지 여부
-    // uint public allDeposit;
-    // bool public mentValid;
-
-    // 토큰 지급되면 호출, 출결 시스템 저장되면 호출, 종료되면 호출
+    // mentoring (date, place, subject, content, mentor, mentee) 관리
+    mapping(uint=>string) public mentoringDate;
+    mapping(uint=>string) public mentoringPlace;
+    mapping(uint=>string) public mentoringSubject;
+    mapping(uint=>string) public mentoringContent;
+    mapping(uint=>address) public mentorAddress;
+    mapping(uint=>address) public menteeAddress;
+    // mentoring 개수 관리
+    uint public countOfMents;
+    // 초기 토큰 지급, mentoring 등록, mentoring 저장 이벤트 관리
     event InitTokenResponded(address _address);
     event RegisterMentoring(address _address);
-    // event SetKindOfAttend(address _address);
-    // event EndedMent(address _address);
-
+    event SaveMentoring(address _address);
+    
     constructor() public {
-        // mentValid = true;
-        ments.push(MentStruct(ments.length, now, "", "", "", "", address(0), address(0), false));
     }
     
-    // function deposit(uint _deposit, address _address) public {
-    //     // deposit 여부 체크
-    //     require(!hasDeposited[_address]);
-    //     // 토큰량 체크
-    //     require(tokenContract.balanceOf(_address) >= _deposit);
-    //     // 토큰 전송
-    //     tokenContract.transfer(_address, tokenContract.getOwner(), _deposit);
-    //     // deposit 토큰 추가
-    //     allDeposit = allDeposit.add(_deposit);
-    //     // 개인 deposit 추가
-    //     eachDeposits[_address] = _deposit;
-    //     // deposit 상태 변경
-    //     hasDeposited[_address] = true;
-    // }
-    function registerMentoring(address _mentorAddress, address _menteeAddress, string memory mentoringSubject) public {
-        ments.push(MentStruct(ments.length, now, "", "", mentoringSubject, "", _mentorAddress, _menteeAddress, false));
+    function registerMentoring(address _mentorAddress, address _menteeAddress, uint _fee, string memory _mentoringSubject) public {
+        // mentoring 개수 증가
+        countOfMents = countOfMents.add(1);
+        // mentoring(fee, timestamp, isValid) struct 생성
+        ments[countOfMents] = MentStruct(_fee, now, true);
+        // mentoring(subject, mentor, mentee) 저장
+        mentoringSubject[countOfMents] = _mentoringSubject;
+        mentorAddress[countOfMents] = _mentorAddress;
+        menteeAddress[countOfMents] = _menteeAddress;
+        // mentoring 등록 완료 이벤트
         emit RegisterMentoring(msg.sender);
     }
-    // function setKindOfAttend(uint8 _kindOfAttend, address _address) public {
-    //     // 상태 변경 0: absent, 1: late, 2: attend 
-    //     kindOfAttend[_address] = _kindOfAttend;
-    //     emit SetKindOfAttend(msg.sender);
-    // }    
-    // function endMent(address[] memory _addresses) public {
-    //     require(mentValid);
-    //     mentValid = false;
-    //     uint addressesLength = _addresses.length;
-    //     uint amountOfWithdraw = 0;
-    //     uint countOfAttend = 0;
-    //     for(uint i=0; i<addressesLength; i++){
-    //         // 출석자 돌려줌
-    //         // 지각자 돌려줌
-    //         if(kindOfAttend[_addresses[i]] == 2){
-    //             amountOfWithdraw = eachDeposits[_addresses[i]];
-    //             require(tokenContract.balanceOf(tokenContract.getOwner()) >= amountOfWithdraw);
-    //             tokenContract.transfer(tokenContract.getOwner(), _addresses[i], amountOfWithdraw);
-    //             countOfAttend = countOfAttend.add(1);
-    //         } else if(kindOfAttend[_addresses[i]] == 1){
-    //             amountOfWithdraw = eachDeposits[_addresses[i]].div(2);
-    //             require(tokenContract.balanceOf(tokenContract.getOwner()) >= amountOfWithdraw);
-    //             tokenContract.transfer(tokenContract.getOwner(), _addresses[i], amountOfWithdraw);
-    //             kindOfAttend[_addresses[i]] = 0;
-    //             hasDeposited[_addresses[i]] = false;
-    //         } else {
-    //             amountOfWithdraw = 0;
-    //             hasDeposited[_addresses[i]] = false;
-    //         }
-    //         allDeposit = allDeposit.sub(amountOfWithdraw);
-    //         eachDeposits[_addresses[i]] = 0;
-    //     }
-    //     // 출석자 보상해줌
-    //     uint rewardFromRemainedDeposit = allDeposit.div(countOfAttend);
-    //     for(uint i=0; i<addressesLength; i++){
-    //         if(kindOfAttend[_addresses[i]] == 2){
-    //             require(tokenContract.balanceOf(tokenContract.getOwner()) >= rewardFromRemainedDeposit);
-    //             tokenContract.transfer(tokenContract.getOwner(), _addresses[i], rewardFromRemainedDeposit);
-    //             allDeposit = allDeposit.sub(rewardFromRemainedDeposit);
-    //             kindOfAttend[_addresses[i]] = 0;
-    //             hasDeposited[_addresses[i]] = false;
-    //         }
-    //     }
-    //     emit EndedMent(msg.sender);
-    // }
-
+    
+    // id, deposit, timestamp, date, place, subject, content, mentor, mentee, valid
+    function saveMentoring(uint _id, string memory _date, string memory _place, string memory _content) public {
+        // mentee의 토큰 여분 체크
+        require(tokenContract.balanceOf(menteeAddress[_id]) >= ments[_id].fee);
+        // mentee가 mentor에게 토큰 지급
+        tokenContract.transfer(menteeAddress[_id], mentorAddress[_id], ments[_id].fee);
+        // mentoring 등록 후 나머지 미입력 정보 (date, place, content) 저장
+        mentoringDate[_id] = _date;
+        mentoringPlace[_id] = _place;
+        mentoringContent[_id] = _content;
+        // mentoring 유효 해제
+        ments[_id].isValid = false;
+        // mentoring 저장 완료 이벤트
+        emit SaveMentoring(msg.sender);
+    }
+    
     function requestInitToken() public {
         // 시작 토큰 전송
         tokenContract.transfer(msg.sender, INIT_TOKEN_VALUE);
@@ -354,22 +308,24 @@ contract MentContract is Owned{
         // event 호출
         emit InitTokenResponded(msg.sender);
     }
-
-    // function isMentValid() public view returns (bool){
-    //     // 유효한 출결 시스템인지 체크
-    //     return mentValid;
-    // }
-
+    
     function isReceivedInitToken() public view returns (bool) {
         // 이미 시작 토큰을 받았는지 체크
         return receivedInitToken[msg.sender];
     }
     
+    function isValidMentoring(uint _id) public view returns (bool) {
+        // mentoring 유효 여부 체크
+        return ments[_id].isValid;
+    }
+    
     function setUserName(address _address, string memory _name) public {
+        // user 네임 저장
         usersName[_address] = _name;
     }
     
     function getUserName(address _address) public view returns (string memory){
+        // user 네임 반환
         return usersName[_address];
     }
 
@@ -389,22 +345,28 @@ contract MentContract is Owned{
     }
     
     function getCountOfMents() public view returns (uint) {
-        return ments.length;
+        // mentoring 개수 반환
+        return countOfMents;
     }
-
+    
     function getMent(uint _id) public view returns(
-        uint, uint, string memory, string memory, string memory, string memory, address, address, bool){
-        MentStruct memory mentStruct = ments[_id];
+        uint, uint, uint, string memory, string memory, string memory, string memory, address, address, bool){
+        // stack deep 문제 대처
+        uint id = _id;
         // 멘토링 관리 목록에 보여줄 내용 반환
+        // mentoring id, fee, timestamp, 
+        // date, place, subject, content, 
+        // mentor, mentee, valid
         return (
-            mentStruct.id,
-            mentStruct.timestamp,
-            mentStruct.mentoringDate,
-            mentStruct.mentoringPlace,
-            mentStruct.mentoringSubject,
-            mentStruct.mentoringContent,
-            mentStruct.mentorAddress,
-            mentStruct.menteeAddress,
-            mentStruct.isValid);
+            id,
+            ments[id].fee,
+            ments[id].timestamp,
+            mentoringDate[id],
+            mentoringPlace[id],
+            mentoringSubject[id],
+            mentoringContent[id],
+            mentorAddress[id],
+            menteeAddress[id],
+            ments[id].isValid);
     }
 }
