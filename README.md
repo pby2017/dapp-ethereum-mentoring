@@ -37,6 +37,6 @@ geth --datadir testNode1 --networkid 9865 --rpcapi "personal,db,eth,net,web3,min
 ```
 ※ 사용법은 html 실행시 하단에 정리되어 있음.
 ```
-![UI image](https://github.com/pby2017/study-ment-geth-dapp/blob/master/image/UI.jpg)
+![UI image](https://github.com/pby2017/study-ment-geth-dapp/blob/master/image/UI.png)
 
 ## 변경사항
